@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#00c853">
+    <title>Supermarkt Deals</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #121212;
+            color: #fff;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+        .header {
+            background: linear-gradient(135deg, #00c853 0%, #00a344 100%);
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header h1 { font-size: 1.5em; }
+        .header p { opacity: 0.9; font-size: 0.9em; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding: 15px;
+            background: #1e1e1e;
+        }
+        .stat-box {
+            text-align: center;
+            padding: 10px;
+        }
+        .stat-number { font-size: 1.5em; color: #00c853; font-weight: bold; }
+        .stat-label { font-size: 0.7em; color: #888; }
+        .filter {
+            padding: 15px;
+            background: #1e1e1e;
+            border-bottom: 1px solid #333;
+        }
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: #333;
+            color: #fff;
+            font-size: 1em;
+        }
+        .deals-list { padding: 15px; }
+        .deal {
+            background: #1e1e1e;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #00c853;
+        }
+        .deal-info h3 { margin-bottom: 5px; font-size: 1.1em; }
+        .deal-meta { color: #888; font-size: 0.85em; }
+        .price { font-size: 1.8em; color: #00c853; font-weight: bold; }
+        .add-btn {
+            background: #00c853;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .add-btn:active { transform: scale(0.95); }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1e1e1e;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            border-top: 1px solid #333;
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.5em;
+            padding: 10px;
+        }
+        .nav-btn.active { color: #00c853; }
+        .page { display: none; }
+        .page.active { display: block; }
+        .shopping-list {
+            padding: 15px;
+        }
+        .list-item {
+            background: #1e1e1e;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .list-item.checked { opacity: 0.5; }
+        .list-item input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #888;
+        }
+        .empty-state .icon { font-size: 4em; margin-bottom: 20px; }
+        .install-btn {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #00c853;
+            color: #000;
+            padding: 15px 30px;
+            border-radius: 30px;
+            border: none;
+            font-weight: bold;
+            display: none;
+        }
+        .install-btn.visible { display: block; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛒 Supermarkt Deals</h1>
+        <p>Die besten Angebote in deiner Nähe!</p>
+    </div>
+
+    <!-- Home Page -->
+    <div id="home" class="page active">
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-number">6</div>
+                <div class="stat-label">Angebote</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">4</div>
+                <div class="stat-label">Märkte</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">€0.99</div>
+                <div class="stat-label">Bester Preis</div>
+            </div>
+        </div>
+        
+        <div class="filter">
+            <select id="supermarktFilter" onchange="filterDeals()">
+                <option value="alle">Alle Supermärkte</option>
+                <option value="rewe">Rewe</option>
+                <option value="aldi">Aldi</option>
+                <option value="lidl">Lidl</option>
+                <option value="edeka">Edeka</option>
+            </select>
+        </div>
+        
+        <div class="deals-list" id="dealsList"></div>
+    </div>
+
+    <!-- Shopping List Page -->
+    <div id="list" class="page">
+        <div class="filter">
+            <input type="text" id="newItem" placeholder="Artikel hinzufügen..." onkeypress="if(event.key==='Enter')addItem()">
+        </div>
+        <div class="shopping-list" id="shoppingList">
+            <div class="empty-state">
+                <div class="icon">📝</div>
+                <h3>Deine Einkaufsliste ist leer</h3>
+                <p>Füge Artikel hinzu oder klicke + bei Angeboten</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Install Button -->
+    <button id="installBtn" class="install-btn" onclick="installPWA()">📲 App installieren</button>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <button class="nav-btn active" onclick="showPage('home')">🏠</button>
+        <button class="nav-btn" onclick="showPage('list')">📝<span id="listCount"></span></button>
+        <button class="nav-btn" onclick="showPage('profile')">👤</button>
+    </div>
+
+    <script>
+        // Demo-Daten
+        const deals = [
+            { id: 1, name: 'Vollmilch 1L', market: 'rewe', marketName: 'Rewe', price: 0.99, category: '🥛 Milch' },
+            { id: 2, name: 'Vollmilch 1L', market: 'aldi', marketName: 'Aldi', price: 1.09, category: '🥛 Milch' },
+            { id: 3, name: 'Toastbrot', market: 'rewe', marketName: 'Rewe', price: 1.49, category: '🍞 Brot' },
+            { id: 4, name: 'Eier (10 Stück)', market: 'lidl', marketName: 'Lidl', price: 2.29, category: '🥚 Eier' },
+            { id: 5, name: 'Butter 250g', market: 'aldi', marketName: 'Aldi', price: 1.99, category: '🧈 Milch' },
+            { id: 6, name: 'Äpfel 1kg', market: 'edeka', marketName: 'Edeka', price: 2.49, category: '🍎 Obst' }
+        ];
+
+        let shoppingList = JSON.parse(localStorage.getItem('shoppingList')) || [];
+
+        function renderDeals(filtered = deals) {
+            const container = document.getElementById('dealsList');
+            container.innerHTML = filtered.map(deal => `
+                <div class="deal" data-market="${deal.market}">
+                    <div class="deal-info">
+                        <h3>${deal.name}</h3>
+                        <div class="deal-meta">📍 ${deal.marketName} • ${deal.category}</div>
+                    </div>
+                    <div class="price">€${deal.price.toFixed(2)}</div>
+                    <button class="add-btn" onclick="addToList('${deal.name}', ${deal.price}, '${deal.marketName}')">+</button>
+                </div>
+            `).join('');
+        }
+
+        function filterDeals() {
+            const filter = document.getElementById('supermarktFilter').value;
+            const filtered = filter === 'alle' ? deals : deals.filter(d => d.market === filter);
+            renderDeals(filtered);
+        }
+
+        function addToList(name, price, market) {
+            shoppingList.push({ name, price, market, checked: false, id: Date.now() });
+            saveList();
+            updateListCount();
+            showPage('list');
+        }
+
+        function addItem() {
+            const input = document.getElementById('newItem');
+            if (input.value.trim()) {
+                shoppingList.push({ name: input.value, price: null, market: '', checked: false, id: Date.now() });
+                saveList();
+                input.value = '';
+                renderList();
+            }
+        }
+
+        function toggleItem(id) {
+            const item = shoppingList.find(i => i.id === id);
+            if (item) item.checked = !item.checked;
+            saveList();
+            renderList();
+        }
+
+        function deleteItem(id) {
+            shoppingList = shoppingList.filter(i => i.id !== id);
+            saveList();
+            renderList();
+            updateListCount();
+        }
+
+        function renderList() {
+            const container = document.getElementById('shoppingList');
+            if (shoppingList.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📝</div>
+                        <h3>Deine Einkaufsliste ist leer</h3>
+                        <p>Füge Artikel hinzu oder klicke + bei Angeboten</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = shoppingList.map(item => `
+                <div class="list-item ${item.checked ? 'checked' : ''}">
+                    <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleItem(${item.id})">
+                    <div style="flex: 1;">
+                        <div>${item.name}</div>
+                        ${item.price ? `<small style="color: #888;">${item.market} • €${item.price.toFixed(2)}</small>` : ''}
+                    </div>
+                    <button onclick="deleteItem(${item.id})" style="background:none;border:none;color:#ff4444;font-size:1.2em;">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        function saveList() {
+            localStorage.setItem('shoppingList', JSON.stringify(shoppingList));
+        }
+
+        function updateListCount() {
+            const count = shoppingList.filter(i => !i.checked).length;
+            document.getElementById('listCount').textContent = count > 0 ? ` (${count})` : '';
+        }
+
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(page).classList.add('active');
+            if (page === 'list') renderList();
+            
+            const btnIndex = page === 'home' ? 0 : page === 'list' ? 1 : 2;
+            document.querySelectorAll('.nav-btn')[btnIndex].classList.add('active');
+        }
+
+        // PWA Install
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installBtn').classList.add('visible');
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(() => {
+                    document.getElementById('installBtn').classList.remove('visible');
+                });
+            }
+        }
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(() => {
+                console.log('Service Worker registered');
+            });
+        }
+
+        // Init
+        renderDeals();
+        updateListCount();
+    </script>
+</body>
+</html>
