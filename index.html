@@ -1,340 +1,197 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#00c853">
-    <title>Supermarkt Deals</title>
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="theme-color" content="#0f172a">
+    <title>Smart Shopping</title>
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="../icon-192.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                    colors: {
+                        primary: {
+                            50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0', 300: '#6ee7b7',
+                            400: '#34d399', 500: '#10b981', 600: '#059669', 700: '#047857',
+                            800: '#065f46', 900: '#064e3b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #121212;
-            color: #fff;
-            min-height: 100vh;
-            padding-bottom: 80px;
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
-        .header {
-            background: linear-gradient(135deg, #00c853 0%, #00a344 100%);
-            padding: 20px;
-            text-align: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
+        .deal-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .deal-card:active { transform: scale(0.98); }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
         }
-        .header h1 { font-size: 1.5em; }
-        .header p { opacity: 0.9; font-size: 0.9em; }
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            padding: 15px;
-            background: #1e1e1e;
+        .shimmer {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
         }
-        .stat-box {
-            text-align: center;
-            padding: 10px;
-        }
-        .stat-number { font-size: 1.5em; color: #00c853; font-weight: bold; }
-        .stat-label { font-size: 0.7em; color: #888; }
-        .filter {
-            padding: 15px;
-            background: #1e1e1e;
-            border-bottom: 1px solid #333;
-        }
-        select, input {
-            width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            border: none;
-            background: #333;
-            color: #fff;
-            font-size: 1em;
-        }
-        .deals-list { padding: 15px; }
-        .deal {
-            background: #1e1e1e;
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-left: 4px solid #00c853;
-        }
-        .deal-info h3 { margin-bottom: 5px; font-size: 1.1em; }
-        .deal-meta { color: #888; font-size: 0.85em; }
-        .price { font-size: 1.8em; color: #00c853; font-weight: bold; }
-        .add-btn {
-            background: #00c853;
-            border: none;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            font-size: 1.5em;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .add-btn:active { transform: scale(0.95); }
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #1e1e1e;
-            display: flex;
-            justify-content: space-around;
-            padding: 10px;
-            border-top: 1px solid #333;
-        }
-        .nav-btn {
-            background: none;
-            border: none;
-            color: #888;
-            font-size: 1.5em;
-            padding: 10px;
-        }
-        .nav-btn.active { color: #00c853; }
-        .page { display: none; }
-        .page.active { display: block; }
-        .shopping-list {
-            padding: 15px;
-        }
-        .list-item {
-            background: #1e1e1e;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .list-item.checked { opacity: 0.5; }
-        .list-item input[type="checkbox"] {
-            width: 24px;
-            height: 24px;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 50px 20px;
-            color: #888;
-        }
-        .empty-state .icon { font-size: 4em; margin-bottom: 20px; }
-        .install-btn {
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #00c853;
-            color: #000;
-            padding: 15px 30px;
-            border-radius: 30px;
-            border: none;
-            font-weight: bold;
-            display: none;
-        }
-        .install-btn.visible { display: block; }
     </style>
 </head>
-<body>
-    <div class="header">
-        <h1>🛒 Supermarkt Deals</h1>
-        <p>Die besten Angebote in deiner Nähe!</p>
-    </div>
-
-    <!-- Home Page -->
-    <div id="home" class="page active">
-        <div class="stats">
-            <div class="stat-box">
-                <div class="stat-number">6</div>
-                <div class="stat-label">Angebote</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-number">4</div>
-                <div class="stat-label">Märkte</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-number">€0.99</div>
-                <div class="stat-label">Bester Preis</div>
-            </div>
-        </div>
-        
-        <div class="filter">
-            <select id="supermarktFilter" onchange="filterDeals()">
-                <option value="alle">Alle Supermärkte</option>
-                <option value="rewe">Rewe</option>
-                <option value="aldi">Aldi</option>
-                <option value="lidl">Lidl</option>
-                <option value="edeka">Edeka</option>
-            </select>
-        </div>
-        
-        <div class="deals-list" id="dealsList"></div>
-    </div>
-
-    <!-- Shopping List Page -->
-    <div id="list" class="page">
-        <div class="filter">
-            <input type="text" id="newItem" placeholder="Artikel hinzufügen..." onkeypress="if(event.key==='Enter')addItem()">
-        </div>
-        <div class="shopping-list" id="shoppingList">
-            <div class="empty-state">
-                <div class="icon">📝</div>
-                <h3>Deine Einkaufsliste ist leer</h3>
-                <p>Füge Artikel hinzu oder klicke + bei Angeboten</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Install Button -->
-    <button id="installBtn" class="install-btn" onclick="installPWA()">📲 App installieren</button>
-
-    <!-- Bottom Navigation -->
-    <div class="bottom-nav">
-        <button class="nav-btn active" onclick="showPage('home')">🏠</button>
-        <button class="nav-btn" onclick="showPage('list')">📝<span id="listCount"></span></button>
-        <button class="nav-btn" onclick="showPage('profile')">👤</button>
-    </div>
-
-    <script>
-        // Demo-Daten
-        const deals = [
-            { id: 1, name: 'Vollmilch 1L', market: 'rewe', marketName: 'Rewe', price: 0.99, category: '🥛 Milch' },
-            { id: 2, name: 'Vollmilch 1L', market: 'aldi', marketName: 'Aldi', price: 1.09, category: '🥛 Milch' },
-            { id: 3, name: 'Toastbrot', market: 'rewe', marketName: 'Rewe', price: 1.49, category: '🍞 Brot' },
-            { id: 4, name: 'Eier (10 Stück)', market: 'lidl', marketName: 'Lidl', price: 2.29, category: '🥚 Eier' },
-            { id: 5, name: 'Butter 250g', market: 'aldi', marketName: 'Aldi', price: 1.99, category: '🧈 Milch' },
-            { id: 6, name: 'Äpfel 1kg', market: 'edeka', marketName: 'Edeka', price: 2.49, category: '🍎 Obst' }
-        ];
-
-        let shoppingList = JSON.parse(localStorage.getItem('shoppingList')) || [];
-
-        function renderDeals(filtered = deals) {
-            const container = document.getElementById('dealsList');
-            container.innerHTML = filtered.map(deal => `
-                <div class="deal" data-market="${deal.market}">
-                    <div class="deal-info">
-                        <h3>${deal.name}</h3>
-                        <div class="deal-meta">📍 ${deal.marketName} • ${deal.category}</div>
-                    </div>
-                    <div class="price">€${deal.price.toFixed(2)}</div>
-                    <button class="add-btn" onclick="addToList('${deal.name}', ${deal.price}, '${deal.marketName}')">+</button>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased">
+    
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 z-50 glass border-b border-slate-800/50">
+        <div class="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/20">
+                    <i class="fas fa-shopping-basket text-white text-lg"></i>
                 </div>
-            `).join('');
-        }
-
-        function filterDeals() {
-            const filter = document.getElementById('supermarktFilter').value;
-            const filtered = filter === 'alle' ? deals : deals.filter(d => d.market === filter);
-            renderDeals(filtered);
-        }
-
-        function addToList(name, price, market) {
-            shoppingList.push({ name, price, market, checked: false, id: Date.now() });
-            saveList();
-            updateListCount();
-            showPage('list');
-        }
-
-        function addItem() {
-            const input = document.getElementById('newItem');
-            if (input.value.trim()) {
-                shoppingList.push({ name: input.value, price: null, market: '', checked: false, id: Date.now() });
-                saveList();
-                input.value = '';
-                renderList();
-            }
-        }
-
-        function toggleItem(id) {
-            const item = shoppingList.find(i => i.id === id);
-            if (item) item.checked = !item.checked;
-            saveList();
-            renderList();
-        }
-
-        function deleteItem(id) {
-            shoppingList = shoppingList.filter(i => i.id !== id);
-            saveList();
-            renderList();
-            updateListCount();
-        }
-
-        function renderList() {
-            const container = document.getElementById('shoppingList');
-            if (shoppingList.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="icon">📝</div>
-                        <h3>Deine Einkaufsliste ist leer</h3>
-                        <p>Füge Artikel hinzu oder klicke + bei Angeboten</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = shoppingList.map(item => `
-                <div class="list-item ${item.checked ? 'checked' : ''}">
-                    <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleItem(${item.id})">
-                    <div style="flex: 1;">
-                        <div>${item.name}</div>
-                        ${item.price ? `<small style="color: #888;">${item.market} • €${item.price.toFixed(2)}</small>` : ''}
-                    </div>
-                    <button onclick="deleteItem(${item.id})" style="background:none;border:none;color:#ff4444;font-size:1.2em;">🗑️</button>
+                <div>
+                    <h1 class="text-lg font-bold bg-gradient-to-r from-primary-400 to-primary-500 bg-clip-text text-transparent">Smart Shopping</h1>
+                    <p class="text-xs text-slate-400" id="header-status">Lade...</p>
                 </div>
-            `).join('');
-        }
+            </div>
+            <button onclick="toggleSearch()" class="w-10 h-10 rounded-xl bg-slate-800/80 flex items-center justify-center active:scale-95 transition-transform">
+                <i class="fas fa-search text-slate-300"></i>
+            </button>
+        </div>
+    </header>
 
-        function saveList() {
-            localStorage.setItem('shoppingList', JSON.stringify(shoppingList));
-        }
+    <!-- Search Bar -->
+    <div id="search-bar" class="fixed top-[72px] left-0 right-0 z-40 glass border-b border-slate-800/50 transform -translate-y-full transition-transform duration-300">
+        <div class="max-w-lg mx-auto px-4 py-3">
+            <div class="relative">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="search-input" placeholder="Produkte suchen..." 
+                    class="w-full pl-11 pr-4 py-3 bg-slate-800/80 rounded-xl border border-slate-700/50 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all placeholder-slate-500 text-white"
+                    oninput="filterProducts(this.value)">
+            </div>
+        </div>
+    </div>
 
-        function updateListCount() {
-            const count = shoppingList.filter(i => !i.checked).length;
-            document.getElementById('listCount').textContent = count > 0 ? ` (${count})` : '';
-        }
+    <!-- Main Content -->
+    <main class="pt-20 pb-24 px-4 max-w-lg mx-auto">
+        
+        <!-- Stats -->
+        <section class="mb-6">
+            <div class="grid grid-cols-3 gap-3">
+                <div class="bg-gradient-to-br from-primary-500/20 to-primary-600/10 rounded-2xl p-4 border border-primary-500/20">
+                    <div class="text-2xl font-bold text-primary-400" id="stat-deals">0</div>
+                    <div class="text-xs text-slate-400 mt-1">Angebote</div>
+                </div>
+                <div class="bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-2xl p-4 border border-blue-500/20">
+                    <div class="text-2xl font-bold text-blue-400" id="stat-savings">0%</div>
+                    <div class="text-xs text-slate-400 mt-1">Max. Ersparnis</div>
+                </div>
+                <div class="bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-2xl p-4 border border-purple-500/20">
+                    <div class="text-2xl font-bold text-purple-400" id="stat-stores">0</div>
+                    <div class="text-xs text-slate-400 mt-1">Läden</div>
+                </div>
+            </div>
+        </section>
 
-        function showPage(page) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(page).classList.add('active');
-            if (page === 'list') renderList();
-            
-            const btnIndex = page === 'home' ? 0 : page === 'list' ? 1 : 2;
-            document.querySelectorAll('.nav-btn')[btnIndex].classList.add('active');
-        }
+        <!-- Store Filter -->
+        <section class="mb-6">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-sm font-semibold text-slate-300">Supermärkte</h2>
+                <button onclick="clearFilters()" class="text-xs text-primary-400 hover:text-primary-300 transition-colors">Zurücksetzen</button>
+            </div>
+            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2" id="store-filters">
+                <!-- Stores injected by JS -->
+            </div>
+        </section>
 
-        // PWA Install
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('installBtn').classList.add('visible');
-        });
+        <!-- Shopping List -->
+        <section class="mb-6">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-sm font-semibold text-slate-300">
+                    <i class="fas fa-shopping-list mr-2 text-primary-400"></i>Meine Liste
+                </h2>
+                <button onclick="showAddItem()" class="w-8 h-8 rounded-lg bg-primary-500/20 flex items-center justify-center text-primary-400 hover:bg-primary-500/30 transition-colors">
+                    <i class="fas fa-plus text-sm"></i>
+                </button>
+            </div>
+            <div id="shopping-list" class="space-y-2">
+                <!-- Items injected by JS -->
+            </div>
+        </section>
 
-        function installPWA() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then(() => {
-                    document.getElementById('installBtn').classList.remove('visible');
-                });
-            }
-        }
+        <!-- Best Deals -->
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-sm font-semibold text-slate-300">
+                    <i class="fas fa-fire mr-2 text-orange-400"></i>Beste Deals
+                </h2>
+                <select id="sort-select" onchange="sortDeals(this.value)" class="bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-primary-500 text-slate-300">
+                    <option value="discount">Beste Deals</option>
+                    <option value="price-asc">Preis ↓</option>
+                    <option value="price-desc">Preis ↑</option>
+                </select>
+            </div>
+            <div id="deals-list" class="space-y-3">
+                <!-- Loading skeleton -->
+                <div class="shimmer rounded-2xl h-28"></div>
+                <div class="shimmer rounded-2xl h-28"></div>
+                <div class="shimmer rounded-2xl h-28"></div>
+            </div>
+        </section>
+    </main>
 
-        // Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').then(() => {
-                console.log('Service Worker registered');
-            });
-        }
+    <!-- Bottom Nav -->
+    <nav class="fixed bottom-0 left-0 right-0 z-50 glass border-t border-slate-800/50">
+        <div class="max-w-lg mx-auto flex justify-around py-2">
+            <button onclick="showTab('deals')" class="flex flex-col items-center gap-1 px-6 py-2 rounded-xl text-primary-400" id="nav-deals">
+                <i class="fas fa-fire text-xl"></i>
+                <span class="text-[10px] font-medium">Deals</span>
+            </button>
+            <button onclick="showTab('list')" class="flex flex-col items-center gap-1 px-6 py-2 rounded-xl text-slate-500 hover:text-slate-300 transition-colors relative" id="nav-list">
+                <i class="fas fa-shopping-list text-xl"></i>
+                <span class="text-[10px] font-medium">Liste</span>
+                <span id="list-badge" class="absolute -top-1 right-2 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center hidden">0</span>
+            </button>
+            <button onclick="showTab('scan')" class="flex flex-col items-center gap-1 px-6 py-2 rounded-xl text-slate-500 hover:text-slate-300 transition-colors" id="nav-scan">
+                <i class="fas fa-camera text-xl"></i>
+                <span class="text-[10px] font-medium">Scan</span>
+            </button>
+        </div>
+    </nav>
 
-        // Init
-        renderDeals();
-        updateListCount();
-    </script>
+    <!-- Add Item Modal -->
+    <div id="add-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeAddModal()"></div>
+        <div class="absolute bottom-0 left-0 right-0 bg-slate-900 rounded-t-3xl border-t border-slate-800 p-6 transform translate-y-full transition-transform duration-300" id="add-modal-content">
+            <h3 class="text-lg font-bold mb-4">Zur Liste hinzufügen</h3>
+            <input type="text" id="new-item-name" placeholder="Produktname..." 
+                class="w-full px-4 py-3 bg-slate-800/80 rounded-xl border border-slate-700/50 text-sm focus:outline-none focus:border-primary-500 mb-3 text-white placeholder-slate-500">
+            <div class="flex gap-2 mb-4">
+                <button onclick="addItem('high')" class="flex-1 py-3 bg-red-500/20 text-red-400 rounded-xl text-sm font-medium hover:bg-red-500/30 transition-colors">
+                    <i class="fas fa-fire mr-1"></i> Wichtig
+                </button>
+                <button onclick="addItem('normal')" class="flex-1 py-3 bg-slate-700/50 text-slate-300 rounded-xl text-sm font-medium hover:bg-slate-700 transition-colors">
+                    Normal
+                </button>
+            </div>
+            <button onclick="closeAddModal()" class="w-full py-3 bg-slate-800 text-slate-400 rounded-xl text-sm hover:bg-slate-700 transition-colors">Abbrechen</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
 </body>
 </html>
